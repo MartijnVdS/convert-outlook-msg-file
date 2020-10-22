@@ -12,6 +12,7 @@
 # https://msdn.microsoft.com/en-us/library/ee157583(v=exchg.80).aspx
 # https://blogs.msdn.microsoft.com/openspecification/2009/11/06/msg-file-format-part-1/
 
+import logging
 import re
 import os
 import sys
@@ -23,6 +24,7 @@ from email.utils import parsedate_to_datetime, formatdate, formataddr
 
 import compoundfiles
 
+log = logging.getLogger(__name__)
 
 # MAIN FUNCTIONS
 
@@ -54,12 +56,15 @@ def load_message_stream(entry, is_top_level, doc):
     headers = re.sub("Content-Type: .*(\n\s.*)*\n", "", headers, re.I)
 
     # Parse them.
-    headers = email.parser.HeaderParser(policy=email.policy.default)\
-      .parsestr(headers)
+    try:
+      headers = email.parser.HeaderParser(policy=email.policy.default)\
+        .parsestr(headers)
 
-    # Copy them into the message object.
-    for header, value in headers.items():
-      msg[header] = value
+      # Copy them into the message object.
+      for header, value in headers.items():
+        msg[header] = value
+    except Exception as e:
+        log.warning("Error parsing headers with HeaderParser: " + str(e))
 
   else:
     # Construct common headers from metadata.
